@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>DEMO</title>
+
+<style type="text/css">
+img{
+	width: 100%;
+	height: 100%;
+	opacity: 0.2;
+	position: absolute;
+}
+
+.b {
+	width: 1420px;
+	height: 745px;
+	border: 2px solid black;
+	position: fixed;
+}
+
+.block {
+	background-color: rgba(0, 0, 0, 0.2);
+	border: 2px solid black;
+	padding: 25px 30px;
+	border-radius: 10px 10px;
+	display: inline;
+	position: absolute;
+	text-align: center;
+	font-weight: bold;
+	
+}
+
+.playing {
+	transition: 0.1s;
+	transform: scale(1.1);
+	background-color: rgba(0, 0, 0, 0.9);
+	color: white;
+	border: 2px solid yellow;
+	font-weight: bold;
+}
+
+</style>
+</head>
+<body>
+	
+	<div class = "b">
+		<img src="image1.jpg">
+		<div data-key = "65" class = "block" style="top:45%; left : 16%; font-size: 18px">
+			<kbd>A</kbd><br>
+			<font style="font-size: 13px">song-1</font>
+		</div>
+		<div data-key = "83" class = "block" style="top:45%; left : 24%; font-size: 18px">
+			<kbd>S</kbd><br>
+			<font style="font-size: 13px">song-2</font>
+		</div>
+		<div data-key = "68" class = "block" style="top:45%; left : 32%; font-size: 18px">
+			<kbd>D</kbd><br>
+			<font style="font-size: 13px">song-3</font>
+		</div>
+		<div data-key = "70" class = "block" style="top:45%; left : 40%; font-size: 18px">
+			<kbd>F</kbd><br>
+			<font style="font-size: 13px">song-4</font>
+		</div>
+		<div data-key = "71" class = "block" style="top:45%; left : 48%; font-size: 18px">
+			<kbd>G</kbd><br>
+			<font style="font-size: 13px">song-5</font>
+		</div>
+		<div data-key = "72" class = "block" style="top:45%; left : 56%; font-size: 18px">
+			<kbd>H</kbd><br>
+			<font style="font-size: 13px">song-6</font>
+		</div>
+		<div data-key = "74" class = "block" style="top:45%; left : 64%; font-size: 18px">
+			<kbd>J</kbd><br>
+			<font style="font-size: 13px">song-7</font>
+		</div>
+		<div data-key = "75" class = "block" style="top:45%; left : 72%; font-size: 18px">
+			<kbd>K</kbd><br>
+			<font style="font-size: 13px">song-8</font>
+		</div>
+		<div data-key = "76" class = "block" style="top:45%; left : 80%; font-size: 18px">
+			<kbd>L</kbd><br>
+			<font style="font-size: 13px">song-9</font>
+		</div>
+	</div>
+
+	<audio data-key = "65" src="s_clap.wav"> </audio>
+	<audio data-key = "83" src="s_boom.wav"> </audio>
+	<audio data-key = "68" src="s_hihat.wav"> </audio>
+	<audio data-key = "70" src="s_kick.wav"> </audio>
+	<audio data-key = "71" src="s_openhat.wav"> </audio>
+	<audio data-key = "72" src="s_ride.wav"> </audio>
+	<audio data-key = "74" src="s_snare.wav"> </audio>
+	<audio data-key = "75" src="s_tink.wav"> </audio>
+	<audio data-key = "76" src="s_tom.wav"> </audio>
+
+<script type="text/javascript">
+
+window.addEventListener('keydown', startTransitionAndPlaySound);
+
+function startTransitionAndPlaySound(event){
+	var Audio = document.querySelector(`audio[data-key = "${event.keyCode}"]`);
+	var Animation = document.querySelector(`.block[data-key = "${event.keyCode}"]`);
+	console.log(Audio);
+
+	// no audio related to the key ...
+	if(Audio == null){
+		return;
+	}
+
+	// start from time = 0;
+	Audio.currentTime = 0; 
+	Audio.play();
+
+	// Adding class
+	Animation.classList.add('playing');
+}
+
+const close = document.querySelectorAll('.block');
+close.forEach(block => block.addEventListener('transitionend', removeTransition));
+
+function removeTransition(event){
+	// Here longest transition is transform
+	if(event.propertyName != 'transform') return;
+
+	// console.log(event.propertyName);
+	// console.log(this);
+	// Here .this is actually key, which we are pressing from keyboard
+	this.classList.remove('playing');
+}
+
+</script>
+</body>
+</html>
