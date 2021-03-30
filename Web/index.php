@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Cam</title>
+    <style>
+        html {
+            font-family: sans-serif;
+            background : rgb(221, 221, 34);
+        }
+        .main{
+            background: white;
+            width : 800px;
+            height : 1000px;
+            margin : 20px auto;
+            border : 1px solid black;
+            display: flex;
+            flex-flow: column nowrap;
+            align-items: center;
+            justify-content: center;
+            overflow: scroll;
+            position: relative;
+        }
+
+        .inner {
+            padding : 15px 0px;
+            height : 20px;
+            display: flex;
+        }
+
+        .inner > input[type=range]{
+            height: 0px;
+        }
+
+        .space {
+            width : 30px;
+            height: 20px;
+        }
+
+        .player {
+            /* position: absolute; */
+            position: fixed;
+            top : 20px;
+            right : 20px;
+            width : 200px;
+        }
+
+        .strip {
+            margin: 40px 0px;
+            width: 700px;
+            height : 150px;
+            padding: 2rem;
+            /* border : 1px solid black; */
+            overflow: scroll;
+        }
+
+        .strip img {
+            width: 150px;
+            overflow : scroll;
+            padding: 0.8rem 0.3rem 0.8rem 0.3rem;
+            box-shadow: 0 0 3px rgba(0,0,0,1);
+            background: white;
+        }
+
+        /* .strip img:nth-child(4n + 1), .strip img:nth-child(4n + 4) {
+            padding: 0.8rem 0.3rem 0.8rem 0.3rem;
+        }
+        .strip img:nth-child(4n + 2), .strip img:nth-child(4n + 3) {
+            padding: 0.8rem 0.3rem 0.8rem 0.3rem;
+        } */
+
+        .strip a:nth-child(4n+1) img { transform: rotate(10deg); }
+        .strip a:nth-child(4n+2) img { transform: rotate(-2deg); }
+        .strip a:nth-child(4n+3) img { transform: rotate(8deg); }
+        .strip a:nth-child(4n+4) img { transform: rotate(-11deg); }
+        /* .strip a:nth-child(5n+5) img { transform: rotate(12deg); } */
+    </style>
+</head>
+<body>
+    <div class="main">
+        <div class="inner"> 
+            <button onclick="takePhoto()">Take Photo</button>
+        </div>
+        <div class="inner"> 
+            <label>Red Min : </label>
+            <div><input type="range" min="0" max="255" name="rmin"></div>
+            <div class="space"></div>
+            <label>Red Max : </label>
+            <div><input type="range" min="0" max="255" name="rmax"></div>
+        </div>
+        <div class="inner"> 
+            <label>Green Min : </label>
+            <div><input type="range" min="0" max="255" name="gmin"></div>
+            <div class="space"  style="width: 24px;"></div>
+            <label>Green Max : </label>
+            <div><input type="range" min="0" max="255" name="gmax"></div>
+        </div>
+        <div class="inner"> 
+            <label>Blue Min : </label>
+            <div><input type="range" min="0" max="255" name="bmin"></div>
+            <div class="space"></div>
+            <label>Blue Max : </label>
+            <div><input type="range" min="0" max="255" name="bmax"></div>
+        </div>
+
+        <video class="player"></video>
+        <canvas class="photo"></canvas>
+        <div class="strip"></div>
+    </div>
+    <audio class="snap" src="snap.mp3"></audio>
+
+
+    <script>
+        const video = document.querySelector('.player');
+        const canvas = document.querySelector('.photo');
+        const ctx = canvas.getContext('2d');
+        const strip = document.querySelector('.strip');
+        const snap = document.querySelector('.snap');
+
+        function startVideo() {
+            navigator.mediaDevices.getUserMedia({video : true, audio : false})
+                .then(localMediaStream => {
+                    // console.log(localMediaStream);
+                    video.srcObject = localMediaStream;
+                    video.play();
+                    // video.pause();
+                })
+                .catch(err => {
+                    console.log(err);
+                });
+        }
+
+        function paintToCanvas(){
+            const {videoWidth : width} = video;
+            const {videoHeight : height} = video;
+            canvas.width = width;
+            canvas.height = height; 
+
+            return setInterval(() => {
+                ctx.drawImage(video, 0, 0, width, height);
+
+                // getting pixels of image
+                let pixels = ctx.getImageData(0, 0, width, height);
+
+                // mess (change)
+                pixels = greenScreen(pixels);
+                ctx.globalAlpha = 0.1;
+
+                // putting pixels back
+                ctx.putImageData(pixels, 0, 0);
+            }, 1);
+        }
+
+        function takePhoto(){
+            snap.currentTime = 0;
+            snap.play();
+
+            const data = canvas.toDataURL('image/jpeg');
+            const link = document.createElement('a');
+            link.href = data;
+            link.setAttribute('download', 'newPhoto');
+            link.innerHTML = `<img src = "${data}">`;
+            strip.insertBefore(link, strip.firstChild);
+        }
+
+        function redEffect(pixels){
+            for(let i = 0; i < pixels.data.length; i += 4){
+                pixels.data[i + 0] = pixels.data[i + 0] + 100;
+                pixels.data[i + 1] = pixels.data[i + 1];
+                pixels.data[i + 2] = pixels.data[i + 2];
+            }
+            return pixels;
+        }
+
+        function greenEffect(pixels){
+            for(let i = 0; i < pixels.data.length; i += 4){
+                pixels.data[i + 0] = pixels.data[i + 0];
+                pixels.data[i + 1] = pixels.data[i + 1] + 100;
+                pixels.data[i + 2] = pixels.data[i + 2];
+            }
+            return pixels;
+        }
+
+        function blueEffect(pixels){
+            for(let i = 0; i < pixels.data.length; i += 4){
+                pixels.data[i + 0] = pixels.data[i + 0];
+                pixels.data[i + 1] = pixels.data[i + 1];
+                pixels.data[i + 2] = pixels.data[i + 2] + 100;
+            }
+            return pixels;
+        }
+
+        function RGBsplit(pixels){
+            for(let i = 0; i < pixels.data.length; i += 4){
+                pixels.data[i - 550] = pixels.data[i + 0];
+                pixels.data[i + 100] = pixels.data[i + 1];
+                pixels.data[i + 150] = pixels.data[i + 2];
+            }
+            return pixels;
+        }
+
+        function greenScreen (pixels){
+            const Range = document.querySelectorAll('input[type = range]');
+            const inputs = {};
+
+            Range.forEach(input => inputs[input.name] = input.value);
+
+            var cnt = 0;
+            for(let i = 0; i < pixels.data.length; i += 4){
+                const red = pixels.data[i + 0];
+                const green = pixels.data[i + 1];
+                const blue = pixels.data[i + 2];
+
+                if(red >= inputs.rmin && red <= inputs.rmax &&
+                    green >= inputs.gmin && green <= inputs.gmax &&
+                        blue >= inputs.bmin && blue >= inputs.bmax) {
+                            pixels.data[i + 3] = 0;
+                            cnt += 1;
+                        }
+            }
+            return pixels;
+        }
+
+        startVideo();
+        video.addEventListener('canplay', paintToCanvas);
+    </script>
+</body>
+</html>
